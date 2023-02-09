@@ -29,9 +29,18 @@ import math
 
 import multiprocessing
 
-import tensorflow as tf
 import smdistributed.dataparallel.tensorflow as hvd
 hvd.init()
+
+# Fix for compatibility with TF 2.11.
+# We need to set the visible GPUs at the top of the script, otherwise we get error
+# AlreadyExistsError: TensorFlow device is being mapped to multiple devices, which is not supported.
+import tensorflow as tf
+gpus = tf.config.experimental.list_physical_devices("GPU")
+for gpu in gpus:
+    tf.config.experimental.set_memory_growth(gpu, True)
+if gpus:
+    tf.config.experimental.set_visible_devices(gpus[hvd.local_rank()], "GPU")
 
 from mask_rcnn.utils.logging_formatter import logging
 
